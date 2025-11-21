@@ -1,98 +1,51 @@
-import sys
-import os
 import pandas as pd
-import networkx as nx
+from src.data_loader import load_clean_data, slice_by_date, latest_date
+from src.graph_builder import build_graph
+from src.algorithms.bfs import detect_islands
 
-# Para importar desde src/
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+CSV_PATH = "data/dataset.csv"
 
-from data_loader import load_clean_data, slice_by_date, latest_date
-from graph_builder import build_graph
-from algorithms.thresholds import classify_pollution
+def test_bfs():
+    print("\n========== TEST BFS – DETECCIÓN DE ISLAS ==========\n")
 
-# ==============================
-# CONFIGURACIÓN BÁSICA
-# ==============================
-CSV_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'dataset.csv')
-THRESHOLD_KM = 15   # Distancia para conectar estaciones
-POLLUTANT = "PM2_5" # Contaminante principal
-MODE = "OMS"        # Modo de evaluación: "OMS" o "MINAM"
-
-print("🧩 Iniciando pruebas del sistema de detección de islas...")
-print(f"Archivo de datos: {CSV_PATH}")
-
-# ==============================
-# 1️⃣ CARGA Y LIMPIEZA DE DATOS
-# ==============================
-try:
+    # 1. Cargar datos
+    print("Cargando dataset...")
     df = load_clean_data(CSV_PATH)
-    print(f"✅ Datos cargados correctamente ({len(df)} filas)")
-    print("Columnas:", df.columns.tolist())
-    print("Fechas disponibles:", df['fecha'].min().date(), "→", df['fecha'].max().date())
-except Exception as e:
-    print("❌ Error al cargar los datos:", e)
-    sys.exit(1)
 
-# ==============================
-# 2️⃣ SELECCIÓN DE FECHA
-# ==============================
-date = str(latest_date(df))
-print(f"\n📅 Usando la fecha más reciente: {date}")
-df_day = slice_by_date(df, date)
-print(f"Filas del día seleccionado: {len(df_day)}")
+    # 2. Obtener fecha más reciente
+    date = latest_date(df)
+    print(f"Última fecha encontrada: {date}")
 
-# ==============================
-# 3️⃣ CONSTRUCCIÓN DEL GRAFO
-# ==============================
-G = build_graph(df_day, distance_threshold=THRESHOLD_KM)
-print(f"\n📊 Grafo construido: {G.number_of_nodes()} nodos, {G.number_of_edges()} aristas")
+    # 3. Filtrar por esa fecha
+    df_day = slice_by_date(df, str(date))
 
-if G.number_of_edges() == 0:
-    print("⚠️ No hay conexiones entre distritos. Intenta aumentar el umbral (THRESHOLD_KM).")
+    # 4. Construir grafo
+    print("Construyendo grafo con threshold = 10 km")
+    G = build_graph(df_day, distance_threshold=10)
 
-# ==============================
-# 4️⃣ CLASIFICACIÓN DE POLUCIÓN
-# ==============================
-print("\n🌈 Clasificación de contaminación:")
-for node, data in G.nodes(data=True):
-    value = data[POLLUTANT.lower()]
-    color = classify_pollution(value, POLLUTANT, mode=MODE)
-    print(f"{node:25} {POLLUTANT}: {value:6.2f} µg/m³  →  {color}")
+    print(f"Nodos: {len(G.nodes())}")
+    print(f"Aristas: {len(G.edges())}")
 
-# ==============================
-# 5️⃣ DETECCIÓN DE ISLAS ROJAS
-# ==============================
-def detect_red_islands(G, pollutant, mode="OMS"):
-    visited = set()
-    islands = []
-    for node, data in G.nodes(data=True):
-        color = classify_pollution(data[pollutant.lower()], pollutant, mode)
-        if color not in ("red", "purple") or node in visited:
-            continue
+    # 5. Probar distintos escenarios
+    scenarios = [
+        ("PM2_5", "OMS", "green"),
+        ("PM2_5", "OMS", "yellow"),
+        ("PM2_5", "OMS", "orange"),
+        ("PM2_5", "OMS", "red"),
+        ("PM2_5", "OMS", "purple"),
+        ("PM10", "MINAM", "orange"),
+        ("NO2", "OMS", "red")
+    ]
 
-        queue = [node]
-        island = []
-        while queue:
-            current = queue.pop(0)
-            if current not in visited:
-                visited.add(current)
-                island.append(current)
-                for neighbor in G.neighbors(current):
-                    n_color = classify_pollution(G.nodes[neighbor][pollutant.lower()], pollutant, mode)
-                    if n_color in ("red", "purple"):
-                        queue.append(neighbor)
-        if island:
-            islands.append(island)
-    return islands
+    for pollutant, mode, severity in scenarios:
+        print(f"\nProbando: pollutant={pollutant}, mode={mode}, severity={severity}")
 
-islas = detect_red_islands(G, POLLUTANT, MODE)
+        islands = detect_islands(G, pollutant=pollutant, mode=mode, severity=severity)
 
-print("\n🔥 Resultado de detección de islas:")
-if len(islas) == 0:
-    print("❌ No se detectaron islas rojas.")
-else:
-    print(f"✅ Se detectaron {len(islas)} islas contaminadas:")
-    for i, island in enumerate(islas, 1):
-        print(f"  Isla {i}: {', '.join(island)}")
+        print(f"Islas detectadas ({len(islands)}): {islands if islands else 'NINGUNA'}")
 
-print("\n✅ Test completado correctamente.")
+    print("\n========== FIN DEL TEST ==========\n")
+
+
+if __name__ == "__main__":
+    test_bfs()

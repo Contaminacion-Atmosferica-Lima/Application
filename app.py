@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, render_template
 from src.data_loader import load_clean_data, latest_date, slice_by_date
 from src.graph_builder import build_graph
-from src.algorithms.bfs import detect_red_islands
+from src.algorithms.bfs import detect_islands
 import pandas as pd
 
 app = Flask(__name__)
@@ -71,7 +71,7 @@ def get_islas():
 
     G = build_graph(df, distance_threshold=threshold)
 
-    islands = detect_red_islands(G, pollutant=pollutant, mode=mode, severity=severity)
+    islands = detect_islands(G, pollutant=pollutant, mode=mode, severity=severity)
 
     return jsonify({
         "date": date,
