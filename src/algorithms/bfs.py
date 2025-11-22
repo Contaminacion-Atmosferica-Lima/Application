@@ -1,11 +1,12 @@
+from collections import deque
 from src.algorithms.thresholds import classify_pollution
 
 SEVERITY_MAP = {
-    "green":   ["green", "yellow", "orange", "red", "purple"],
-    "yellow":  ["yellow", "orange", "red", "purple"],
-    "orange":  ["orange", "red", "purple"],
-    "red":     ["red", "purple"],
-    "purple":  ["purple"]
+    "green":  ["green"],
+    "yellow": ["yellow", "orange", "red", "purple"],
+    "orange": ["orange", "red", "purple"],
+    "red":    ["red", "purple"],
+    "purple": ["purple"]
 }
 
 def detect_islands(G, pollutant, mode="OMS", severity="red"):
@@ -14,30 +15,33 @@ def detect_islands(G, pollutant, mode="OMS", severity="red"):
 
     target_colors = SEVERITY_MAP.get(severity.lower(), ["red", "purple"])
 
-    for node, data in G.nodes(data=True):
-        color = classify_pollution(data[pollutant.lower()], pollutant, mode)
+    node_color = {
+        n: classify_pollution(G.nodes[n][pollutant.lower()], pollutant, mode)
+        for n in G.nodes()
+    }
 
-        if color not in target_colors or node in visited:
+    for node in G.nodes():
+        if node in visited:
             continue
 
-        queue = [node]
+        if node_color[node] not in target_colors:
+            continue
+
+        queue = deque([node])
         island = []
 
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
 
-            if current not in visited:
-                visited.add(current)
-                island.append(current)
+            if current in visited:
+                continue
 
-                for neighbor in G.neighbors(current):
-                    neighbor_color = classify_pollution(
-                        G.nodes[neighbor][pollutant.lower()],
-                        pollutant,
-                        mode
-                    )
-                    if neighbor_color in target_colors:
-                        queue.append(neighbor)
+            visited.add(current)
+            island.append(current)
+
+            for neighbor in G.neighbors(current):
+                if neighbor not in visited and node_color[neighbor] in target_colors:
+                    queue.append(neighbor)
 
         if island:
             islands.append(island)
