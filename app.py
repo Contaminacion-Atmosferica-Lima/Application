@@ -4,6 +4,7 @@ from src.graph_builder import build_graph, build_global_graph
 from src.algorithms.bfs import detect_islands
 from src.algorithms.thresholds import classify_pollution
 from src.algorithms.ufds import detect_communities
+from src.algorithms.mst import compute_mst
 
 
 app = Flask(__name__)
@@ -155,6 +156,46 @@ def get_communities():
         "communities": communities,
         "count": len(communities)
     })
+
+@app.route("/api/mst")
+def get_mst():
+    df = get_df()
+
+    date = request.args.get("date")
+    try:
+        threshold = float(request.args.get("th", 40))
+    except:
+        threshold = 40
+
+    if date:
+        df_slice = slice_by_date(df, date)
+    else:
+        date = str(latest_date(df))
+        df_slice = slice_by_date(df, date)
+
+    G = build_graph(df_slice, distance_threshold=threshold)
+
+    mst_edges, total_weight = compute_mst(G)
+
+    edges_json = [
+        {
+            "source": u,
+            "destination": v,
+            "distance": w
+        }
+        for u, v, w in mst_edges
+    ]
+
+    return jsonify({
+        "date": date,
+        "threshold": threshold,
+        "node_count": len(G.nodes()),
+        "edge_count": len(G.edges()),
+        "mst_edge_count": len(edges_json),
+        "total_weight": total_weight,
+        "edges": edges_json
+    })
+
 
 
 @app.route('/api/global_graph')
