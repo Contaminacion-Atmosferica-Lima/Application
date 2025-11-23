@@ -1,14 +1,235 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask test</title>
-</head>
-<body>
-    <h1>Servidor Flask funcionando 🚀</h1>
-    <p>Haz clic aquí para probar el endpoint <a href="/ping">/ping</a>.</p>
-    <p>Haz clic aquí para probar el endpoint <a href="/api/data">/data</a>.</p>
-    <p>Haz clic aquí para probar el endpoint <a href="/api/graph">/api/graph</a>.</p>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Lima AirGraph · Mapa interactivo{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <section class="panel shadow-sm rounded-4 p-3 h-100">
+      <h2 class="h5 mb-2">Mapa de contaminación del aire</h2>
+      <p class="small text-secondary mb-3">
+        Visualiza la red de distritos de Lima como un grafo construido a partir de datos
+        de calidad del aire (PM2.5, PM10 y NO₂). Los colores provienen de los umbrales
+        definidos por la <strong>OMS</strong> o el <strong>MINAM</strong>, según el modo seleccionado.
+      </p>
+
+      <form id="filters-form" class="filters-form">
+        <div class="mb-3">
+          <label for="date-input" class="form-label">Fecha (día)</label>
+          <input
+            type="date"
+            id="date-input"
+            name="date"
+            class="form-control form-control-sm bg-dark text-light border-secondary"
+          />
+          <div class="form-text text-secondary small">
+            Si se deja vacío, se usa la última fecha disponible del dataset.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="pollutant-select" class="form-label">Contaminante</label>
+          <select
+            id="pollutant-select"
+            name="pollutant"
+            class="form-select form-select-sm bg-dark text-light border-secondary"
+          >
+            <option value="PM2_5" selected>PM2.5</option>
+            <option value="PM10">PM10</option>
+            <option value="NO2">NO₂</option>
+          </select>
+        </div>
+
+
+
+
+        <div class="mb-3">
+          <label class="form-label">Modo de umbrales</label>
+          <div class="btn-group w-100" role="group" aria-label="Modo de umbrales">
+            <input type="radio" class="btn-check" name="mode" id="mode-oms" value="OMS" checked />
+            <label class="btn btn-sm btn-outline-info" for="mode-oms">OMS</label>
+
+            <input type="radio" class="btn-check" name="mode" id="mode-minam" value="MINAM" />
+            <label class="btn btn-sm btn-outline-info" for="mode-minam">MINAM</label>
+          </div>
+          <div class="form-text text-secondary small">
+            OMS es más estricta; MINAM utiliza umbrales nacionales.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="th-range" class="form-label">Distancia geográfica (km)</label>
+          <input
+            type="range"
+            class="form-range"
+            id="th-range"
+            name="th"
+            min="10"
+            max="50"
+            step="5"
+            value="20"
+          />
+          <div class="d-flex justify-content-between text-secondary small">
+            <span>10 km</span>
+            <span><span id="th-value">20</span> km</span>
+            <span>50 km</span>
+          </div>
+          <div class="form-text text-secondary small">
+            Controla qué tan lejos pueden estar dos distritos para crear una arista en el grafo.
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 btn-sm mt-2">
+          Actualizar mapa
+        </button>
+      </form>
+
+      <hr class="border-secondary my-3" />
+
+      <!-- ALGORITMOS -->
+      <section>
+        <h3 class="h6">Algoritmos sobre el grafo</h3>
+        <p class="small text-secondary mb-2">
+          Todos los algoritmos se ejecutan sobre el grafo del día seleccionado
+          (usando la distancia y contaminante configurados arriba).
+        </p>
+
+        <div class="algorithm-block mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small fw-semibold">Islas de contaminación (BFS)</span>
+            <span class="badge bg-secondary" id="bfs-count-badge">–</span>
+          </div>
+          <div class="mt-1">
+            <label for="severity-select" class="form-label small mb-1">
+              Severidad mínima
+            </label>
+            <select
+              id="severity-select"
+              class="form-select form-select-sm bg-dark text-light border-secondary"
+            >
+              <option value="green">Normal</option>
+              <option value="yellow">Medio</option>
+              <option value="orange">Medianamente alto</option>
+              <option value="red" selected>Crítico</option>
+              <option value="purple">Muy crítico</option>
+            </select>
+          </div>
+          <button
+            class="btn btn-outline-warning btn-sm w-100 mt-2"
+            id="btn-bfs"
+            type="button"
+          >
+            Detectar islas (BFS)
+          </button>
+        </div>
+
+        <div class="algorithm-block mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small fw-semibold">Comunidades por color (UFDS)</span>
+            <span class="badge bg-secondary" id="ufds-count-badge">–</span>
+          </div>
+          <button
+            class="btn btn-outline-light btn-sm w-100 mt-1"
+            id="btn-ufds"
+            type="button"
+          >
+            Detectar comunidades (UFDS)
+          </button>
+        </div>
+
+        <div class="algorithm-block mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small fw-semibold">Árbol de expansión mínima (MST)</span>
+            <span class="badge bg-secondary" id="mst-count-badge">–</span>
+          </div>
+          <button
+            class="btn btn-outline-success btn-sm w-100 mt-1"
+            id="btn-mst"
+            type="button"
+          >
+            Calcular MST (Kruskal)
+          </button>
+        </div>
+
+        <div class="algorithm-block">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-semibold">Propagación desde origen (Dijkstra)</span>
+          </div>
+          <label for="origin-input" class="form-label small mb-1">Distrito origen</label>
+          <input
+            type="text"
+            id="origin-input"
+            class="form-control form-control-sm bg-dark text-light border-secondary"
+            placeholder="Ej: San Borja"
+          />
+          <div class="form-text text-secondary small">
+            Debe existir en el grafo del día seleccionado (se convierte a SAN_BORJA_FECHA).
+          </div>
+          <button
+            class="btn btn-outline-info btn-sm w-100 mt-2"
+            id="btn-propagation"
+            type="button"
+          >
+            Simular propagación
+          </button>
+        </div>
+      </section>
+
+      <hr class="border-secondary my-3" />
+
+      <section>
+        <h3 class="h6">Leyenda de colores</h3>
+        <ul class="list-unstyled small mb-0">
+          <li><span class="legend legend-green"></span> Normal</li>
+          <li><span class="legend legend-yellow"></span> Medio</li>
+          <li><span class="legend legend-orange"></span> Medianamente alto</li>
+          <li><span class="legend legend-red"></span> Crítico</li>
+          <li><span class="legend legend-purple"></span> Muy crítico</li>
+        </ul>
+      </section>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-8">
+    <section class="shadow-sm rounded-4 overflow-hidden mb-3">
+  <div id="map" class="map-container">
+
+</div>
+
+    </section>
+
+    <section class="row g-2">
+      <div class="col-12 col-md-6">
+        <div class="info-card rounded-4 p-3 h-100">
+          <h3 class="h6 mb-2">Resumen del grafo</h3>
+          <p class="small mb-1">
+            <strong>Fecha:</strong> <span id="info-date">–</span>
+          </p>
+          <p class="small mb-1">
+            <strong>Contaminante:</strong> <span id="info-pollutant">–</span>
+            (<span id="info-mode">–</span>)
+          </p>
+          <p class="small mb-1">
+            <strong>Nodos:</strong> <span id="info-nodes">–</span> ·
+            <strong>Aristas:</strong> <span id="info-edges">–</span>
+          </p>
+          <p class="small mb-0 text-secondary">
+            Cada nodo representa un distrito en la fecha seleccionada; las aristas se generan
+            cuando la distancia geográfica es menor o igual al umbral elegido.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="info-card rounded-4 p-3 h-100">
+          <h3 class="h6 mb-2">Resultados de algoritmos</h3>
+          <p class="small mb-1" id="algo-summary-main">
+            Usa los botones de la izquierda para ejecutar BFS, UFDS, MST o Dijkstra
+            sobre el grafo actual.
+          </p>
+          <div class="algo-results small" id="algo-extra-info"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

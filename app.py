@@ -243,7 +243,7 @@ def propagation():
     })
 
 
-@swag_from("docs/global_graph.yml")
+# @swag_from("docs/global_graph.yml")
 @app.route('/api/global_graph')
 def get_global_graph():
     df = get_df()

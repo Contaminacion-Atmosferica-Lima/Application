@@ -1,0 +1,93 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.panel {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+}
+
+.info-card {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+}
+
+#map,
+.map-container {
+  width: 100%;
+  height: 70vh;
+  background: #020308;
+}
+
+#th-range::-webkit-slider-thumb {
+  cursor: pointer;
+}
+
+.legend {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  margin-right: 6px;
+}
+
+.legend-green {
+  background: #2ecc71;
+}
+.legend-yellow {
+  background: #f1c40f;
+}
+.legend-orange {
+  background: #e67e22;
+}
+.legend-red {
+  background: #e74c3c;
+}
+.legend-purple {
+  background: #8e44ad;
+}
+
+.algorithm-block {
+  border-radius: 0.75rem;
+  border: 1px solid #2a2a2a;
+  padding: 0.5rem 0.75rem;
+  background: #111111;
+}
+
+.algo-results {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.algo-results::-webkit-scrollbar {
+  width: 4px;
+}
+.algo-results::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+.leaflet-container {
+  background: #020202;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #111;
+  color: #f5f5f5;
+}
+
+@media (max-width: 991.98px) {
+  .map-container {
+    height: 55vh;
+  }
+}
+
+.leaflet-tooltip.edge-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #444;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
