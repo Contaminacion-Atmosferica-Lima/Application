@@ -5,7 +5,7 @@ from src.algorithms.bfs import detect_islands
 from src.algorithms.thresholds import classify_pollution
 from src.algorithms.ufds import detect_communities
 from src.algorithms.mst import compute_mst
-
+from src.algorithms.dijkstra import build_adj_list, dijkstra
 
 app = Flask(__name__)
 
@@ -162,10 +162,7 @@ def get_mst():
     df = get_df()
 
     date = request.args.get("date")
-    try:
-        threshold = float(request.args.get("th", 40))
-    except:
-        threshold = 40
+    threshold = 40.0
 
     if date:
         df_slice = slice_by_date(df, date)
@@ -196,6 +193,49 @@ def get_mst():
         "edges": edges_json
     })
 
+@app.route("/api/propagation")
+def propagation():
+    df = get_df()
+    date = request.args.get("date")
+    origin = request.args.get("origin") 
+    threshold = 40.0  # Grafo completo
+
+    if not origin:
+        return jsonify({"error": "origin parameter is required"}), 400
+
+    if date:
+        df_slice = slice_by_date(df, date)
+    else:
+        date = str(latest_date(df))
+        df_slice = slice_by_date(df, date)
+
+    G = build_graph(df_slice, distance_threshold=threshold)
+
+    origin_clean = origin.upper().replace(" ", "_")
+    origin_id = f"{origin_clean}_{date}"
+
+    if origin_id not in G.nodes():
+        return jsonify({
+            "error": "The origin district does not exist for the selected date",
+            "origin_received": origin,
+            "origin_built": origin_id,
+            "available_nodes": list(G.nodes())
+        }), 400
+
+    nodes = list(G.nodes())
+    edges = [(u, v, d["weight"]) for u, v, d in G.edges(data=True)]
+
+    adj = build_adj_list(nodes, edges)
+    dist = dijkstra(adj, origin_id)
+
+    ordered = sorted(dist.items(), key=lambda x: x[1])
+
+    return jsonify({
+        "date": date,
+        "origin": origin_id,
+        "distances": dist,
+        "order": [node for node, d in ordered]
+    })
 
 
 @app.route('/api/global_graph')
