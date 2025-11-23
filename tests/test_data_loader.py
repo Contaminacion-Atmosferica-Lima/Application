@@ -1,31 +1,26 @@
-from src.data_loader import load_clean_data
+from src.data_loader import load_clean_data, latest_date, slice_by_date
 
-# Cargar datos procesados
-df = load_clean_data("data/dataset.csv")
+CSV_PATH = "data/dataset.csv"
 
-# Mostrar resumen general
-print("Datos cargados correctamente")
-print("Filas totales:", len(df))
-print("Columnas:", list(df.columns))
-print()
+def test_load_clean_data():
+    df = load_clean_data(CSV_PATH)
 
-# Mostrar las primeras filas
-print("Primeras 10 filas:")
-print(df.head(10))
-print()
+    assert not df.empty
+    assert "distrito" in df.columns
+    assert "fecha" in df.columns
+    assert "latitud" in df.columns
+    assert "longitud" in df.columns
+    assert "pm2_5" in df.columns
 
-# Mostrar tipos de datos
-print("Tipos de datos:")
-print(df.dtypes)
-print()
+def test_latest_date():
+    df = load_clean_data(CSV_PATH)
+    d = latest_date(df)
+    assert d is not None
 
-# Comprobar rangos
-print("Rango de fechas:", df['fecha'].min(), "->", df['fecha'].max())
-print("Rango de coordenadas:")
-print("Latitud:", df['latitud'].min(), "->", df['latitud'].max())
-print("Longitud:", df['longitud'].min(), "->", df['longitud'].max())
-print()
+def test_slice_by_date():
+    df = load_clean_data(CSV_PATH)
+    d = str(latest_date(df))
+    df_day = slice_by_date(df, d)
 
-# Promedios generales de contaminación
-print("Promedios generales:")
-print(df[['pm10', 'pm2_5', 'no2']].mean().round(2))
+    assert not df_day.empty
+    assert all(df_day["fecha"] == d)
