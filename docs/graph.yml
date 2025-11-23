@@ -1,0 +1,96 @@
+# Devuelve el grafo correspondiente a un día específico, incluyendo nodos con
+# información de contaminación y edges basados en la distancia geográfica.
+
+tags:
+  - Graph
+
+parameters:
+  - in: query
+    name: date
+    schema:
+      type: string
+      format: date
+      example: "2024-05-31"
+    required: false
+    description: Fecha a consultar. Si no se envía, se usa la última disponible.
+
+  - in: query
+    name: pollutant
+    schema:
+      type: string
+      enum: [PM2_5, PM10, NO2]
+      default: PM2_5
+    description: Contaminante usado para la clasificación de color.
+
+  - in: query
+    name: mode
+    schema:
+      type: string
+      enum: [OMS, MINAM]
+      default: OMS
+    description: Estándar internacional usado para clasificar contaminación.
+
+  - in: query
+    name: th
+    schema:
+      type: number
+      minimum: 1
+      maximum: 50
+      default: 10
+    description: Distancia máxima (en km) para crear edges entre nodos.
+
+responses:
+  200:
+    description: Grafo procesado exitosamente.
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            date:
+              type: string
+            pollutant:
+              type: string
+            mode:
+              type: string
+            nodes:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:        { type: string }
+                  distrito:  { type: string }
+                  fecha:     { type: string }
+                  latitud:   { type: number }
+                  longitud:  { type: number }
+                  pm10:      { type: number }
+                  pm2_5:     { type: number }
+                  no2:       { type: number }
+                  color:     { type: string }
+            edges:
+              type: array
+              items:
+                type: object
+                properties:
+                  source:      { type: string }
+                  destination: { type: string }
+                  distance:    { type: number }
+
+        example:
+          date: "2024-05-31"
+          pollutant: "PM2_5"
+          mode: "OMS"
+          nodes:
+            - id: "SAN_BORJA_2024-05-31"
+              distrito: "San Borja"
+              fecha: "2024-05-31"
+              latitud: -12.09
+              longitud: -77.01
+              pm10: 52.3
+              pm2_5: 28.1
+              no2: 18.2
+              color: "orange"
+          edges:
+            - source: "SAN_BORJA_2024-05-31"
+              destination: "JESUS_MARIA_2024-05-31"
+              distance: 5.73

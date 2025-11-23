@@ -1,0 +1,59 @@
+# Detecta islas de contaminación en un día usando BFS
+
+tags:
+  - Algorithms
+
+parameters:
+  - in: query
+    name: date
+    schema:
+      type: string
+      example: "2024-05-31"
+    required: false
+    description: Fecha del análisis. Si se omite, se usa la última disponible.
+
+  - in: query
+    name: pollutant
+    schema:
+      type: string
+      enum: [PM2_5, PM10, NO2]
+      default: PM2_5
+    description: Contaminante usado para clasificar los colores.
+
+  - in: query
+    name: mode
+    schema:
+      type: string
+      enum: [OMS, MINAM]
+      default: OMS
+    description: Estándar aplicado para determinar la severidad.
+
+  - in: query
+    name: severity
+    schema:
+      type: string
+      enum: [green, yellow, orange, red, purple]
+      default: red
+    description: Nivel de contaminación que se desea detectar.
+
+  - in: query
+    name: th
+    schema:
+      type: number
+      default: 10
+    description: Distancia máxima (km) para generar edges en el grafo.
+
+responses:
+  200:
+    description: Resultado de islas detectadas.
+    content:
+      application/json:
+        example:
+          date: "2024-05-31"
+          pollutant: "pm2_5"
+          mode: "OMS"
+          severity: "orange"
+          islands:
+            - ["SAN_BORJA_2024-05-31", "JESUS_MARIA_2024-05-31"]
+            - ["CARABAYLLO_2024-05-31"]
+          count: 2

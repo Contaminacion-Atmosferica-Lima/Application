@@ -1,0 +1,39 @@
+# Simula la propagación desde un distrito origen usando Dijkstra
+
+tags:
+  - Algorithms
+
+parameters:
+  - in: query
+    name: origin
+    schema:
+      type: string
+      example: "San_Borja"
+    required: true
+    description: >
+      Nombre del distrito de origen.
+
+  - in: query
+    name: date
+    schema:
+      type: string
+      format: date
+      example: "2024-05-31"
+    required: false
+    description: Fecha del grafo a consultar. 
+
+responses:
+  200:
+    description: Distancias mínimas calculadas correctamente con Dijkstra.
+    content:
+      application/json:
+        example:
+          date: "2024-05-31"
+          origin: "SAN_BORJA_2024-05-31"
+          distances:
+            "JESUS_MARIA_2024-05-31": 5.73
+            "SAN_JUAN_DE_LURIGANCHO_2024-05-31": 14.15
+          order:
+            - "SAN_BORJA_2024-05-31"
+            - "JESUS_MARIA_2024-05-31"
+            - "VILLA_MARIA_DEL_TRIUNFO_2024-05-31"

@@ -1,0 +1,30 @@
+# Genera el Árbol de Expansión Mínima (MST) usando Kruskal
+
+tags:
+  - Algorithms
+
+parameters:
+  - in: query
+    name: date
+    schema:
+      type: string
+      example: "2024-05-31"
+    required: false
+    description: Fecha del conjunto de nodos a procesar. Si no se envía, se usa la última disponible.
+
+responses:
+  200:
+    description: MST generado correctamente con el algoritmo de Kruskal.
+    content:
+      application/json:
+        example:
+          date: "2024-05-31"
+          threshold: 40
+          node_count: 7
+          edge_count: 21
+          mst_edge_count: 6
+          total_weight: 50.77
+          edges:
+            - source: "JESUS_MARIA_2024-05-31"
+              destination: "SAN_BORJA_2024-05-31"
+              distance: 5.73

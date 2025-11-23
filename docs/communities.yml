@@ -1,0 +1,55 @@
+# Detecta comunidades por color usando Union-Find (UFDS)
+
+tags:
+  - Algorithms
+
+parameters:
+  - in: query
+    name: date
+    schema:
+      type: string
+      example: "2024-05-31"
+    required: false
+    description: Fecha a analizar. Si no se envía, se usa la última disponible.
+
+  - in: query
+    name: pollutant
+    schema:
+      type: string
+      enum: [PM2_5, PM10, NO2]
+      default: PM2_5
+    description: Contaminante usado para clasificar el color de cada nodo.
+
+  - in: query
+    name: mode
+    schema:
+      type: string
+      enum: [OMS, MINAM]
+      default: OMS
+    description: Norma utilizada para determinar el nivel de contaminación.
+
+  - in: query
+    name: th
+    schema:
+      type: number
+      default: 10
+    description: Distancia máxima (en km) para generar edges entre nodos.
+
+responses:
+  200:
+    description: Comunidades detectadas por agrupamiento de colores.
+    content:
+      application/json:
+        example:
+          date: "2024-05-31"
+          pollutant: "PM2_5"
+          mode: "OMS"
+          communities:
+            - color: "green"
+              nodes:
+                - "SAN_BORJA_2024-05-31"
+                - "CARABAYLLO_2024-05-31"
+            - color: "orange"
+              nodes:
+                - "SANTA_ANITA_2024-05-31"
+          count: 2

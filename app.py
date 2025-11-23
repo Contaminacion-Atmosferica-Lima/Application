@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, render_template
+from flasgger import swag_from, Swagger
 from src.data_loader import load_clean_data, latest_date, slice_by_date
 from src.graph_builder import build_graph, build_global_graph
 from src.algorithms.bfs import detect_islands
@@ -8,6 +9,7 @@ from src.algorithms.mst import compute_mst
 from src.algorithms.dijkstra import build_adj_list, dijkstra
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 CSV_PATH = 'data/dataset.csv'
 _df_cache = None
@@ -34,7 +36,7 @@ def get_data():
         df = slice_by_date(df, date)
     return df.to_json(orient='records', date_format='iso')
 
-
+@swag_from("docs/graph.yml")
 @app.route('/api/graph')
 def get_graph():
     df = get_df()
@@ -89,7 +91,7 @@ def get_graph():
         "edges": edges_json
     })
 
-
+@swag_from("docs/islas.yml")
 @app.route("/api/islas")
 def get_islas():
     pollutant = request.args.get("pollutant", "PM2_5")
@@ -130,6 +132,7 @@ def get_islas():
         "count": len(islands)
     })
 
+@swag_from("docs/communities.yml")
 @app.route("/api/communities")
 def get_communities():
     df = get_df()
@@ -157,6 +160,7 @@ def get_communities():
         "count": len(communities)
     })
 
+@swag_from("docs/mst.yml")
 @app.route("/api/mst")
 def get_mst():
     df = get_df()
@@ -193,6 +197,7 @@ def get_mst():
         "edges": edges_json
     })
 
+@swag_from("docs/propagation.yml")
 @app.route("/api/propagation")
 def propagation():
     df = get_df()
@@ -238,6 +243,7 @@ def propagation():
     })
 
 
+@swag_from("docs/global_graph.yml")
 @app.route('/api/global_graph')
 def get_global_graph():
     df = get_df()
