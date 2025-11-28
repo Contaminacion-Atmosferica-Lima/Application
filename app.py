@@ -71,6 +71,7 @@ def get_graph():
             "pm10": data["pm10"],
             "pm2_5": data["pm2_5"],
             "no2": data["no2"],
+            "avg": data["avg"], 
             "color": color
         })
 

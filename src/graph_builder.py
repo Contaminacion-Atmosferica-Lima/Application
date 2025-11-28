@@ -27,6 +27,8 @@ def build_graph(df, distance_threshold=10):
         district_id = row["distrito"].upper().replace(" ", "_")
         node_id = f"{district_id}_{date_str}"
 
+        avg_value = (row["pm2_5"] + row["pm10"] + row["no2"]) / 3
+
         G.add_node(
             node_id,
             distrito=row["distrito"],
@@ -35,6 +37,7 @@ def build_graph(df, distance_threshold=10):
             pm10=row["pm10"],
             pm2_5=row["pm2_5"],
             no2=row["no2"],
+            avg=round(avg_value, 2),
             fecha=date_str
         )
 

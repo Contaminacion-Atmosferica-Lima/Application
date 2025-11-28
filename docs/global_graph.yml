@@ -1,0 +1,38 @@
+# Devuelve el grafo global (todas las fechas y distritos) usando un threshold fijo.
+
+tags:
+  - Graph
+
+parameters:
+  - in: query
+    name: th
+    schema:
+      type: number
+      minimum: 1
+      maximum: 50
+      default: 10
+    required: false
+    description: >
+      Distancia máxima (en km) para crear edges entre nodos del grafo global.
+
+responses:
+  200:
+    description: Grafo global generado correctamente.
+    content:
+      application/json:
+        example:
+          total_nodes: 210
+          total_edges: 563
+          nodes:
+            - id: "SAN_BORJA_2024-05-01"
+              distrito: "San Borja"
+              fecha: "2024-05-01"
+              latitud: -12.09
+              longitud: -77.01
+              pm10: 52.3
+              pm2_5: 28.1
+              no2: 18.2
+          edges:
+            - source: "SAN_BORJA_2024-05-01"
+              destination: "JESUS_MARIA_2024-05-01"
+              distance: 5.73

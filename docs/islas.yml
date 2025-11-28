@@ -16,7 +16,7 @@ parameters:
     name: pollutant
     schema:
       type: string
-      enum: [PM2_5, PM10, NO2]
+      enum: [PM2_5, PM10, NO2, AVG]
       default: PM2_5
     description: Contaminante usado para clasificar los colores.
 
