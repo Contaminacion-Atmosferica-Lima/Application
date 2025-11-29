@@ -33,18 +33,18 @@ git clone https://github.com/Contaminacion-Atmosferica-Lima/Application.git
 
 ### 2. Crear entorno virtual
 ```bash
-  python -m venv venv
-  venv\Scripts\activate
+python -m venv venv
+venv\Scripts\activate
 ```
 
 ### 3. Instalar dependencias
 ```bash
-  pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Ejecutar el backend
 ```bash
-  python app.py
+python app.py
 ```
 
 El servidor estará disponible en:
@@ -52,6 +52,6 @@ El servidor estará disponible en:
 http://127.0.0.1:5000
 ```
 La documentación Swagger:
-```
+```bash
 http://127.0.0.1:5000/apidocs
 ```
