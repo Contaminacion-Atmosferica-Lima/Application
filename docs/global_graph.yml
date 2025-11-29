@@ -1,9 +1,37 @@
-# Devuelve el grafo global (todas las fechas y distritos) usando un threshold fijo.
+# Devuelve el grafo global filtrado por distrito y coloreado según contaminante.
 
 tags:
-  - Graph
+  - Global Graph
 
 parameters:
+  - in: query
+    name: distrito
+    schema:
+      type: string
+    required: false
+    description: >
+      Nombre del distrito a filtrar. 
+
+  - in: query
+    name: pollutant
+    schema:
+      type: string
+      enum: [PM10, PM2_5, NO2, AVG]
+      default: AVG
+    required: false
+    description: >
+      Contaminante usado para clasificar y colorear los nodos (PM10, PM2.5, NO2 o AVG).
+
+  - in: query
+    name: mode
+    schema:
+      type: string
+      enum: [OMS, MINAM]
+      default: OMS
+    required: false
+    description: >
+      Norma aplicada para clasificar los niveles de contaminación.
+
   - in: query
     name: th
     schema:
@@ -13,7 +41,7 @@ parameters:
       default: 10
     required: false
     description: >
-      Distancia máxima (en km) para crear edges entre nodos del grafo global.
+      Distancia máxima (en Km) para crear edges entre nodos del grafo global.
 
 responses:
   200:
@@ -25,13 +53,15 @@ responses:
           total_edges: 563
           nodes:
             - id: "SAN_BORJA_2024-05-01"
-              distrito: "San Borja"
+              distrito: "SAN_BORJA"
               fecha: "2024-05-01"
               latitud: -12.09
               longitud: -77.01
               pm10: 52.3
               pm2_5: 28.1
               no2: 18.2
+              avg: 32.13
+              color: "#fffb00"
           edges:
             - source: "SAN_BORJA_2024-05-01"
               destination: "JESUS_MARIA_2024-05-01"

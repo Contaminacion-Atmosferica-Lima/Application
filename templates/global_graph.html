@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Global Graph Viewer</title>
+
+<script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    background: #0f0f0f;
+    display: flex;
+    font-family: "Inter", Arial, sans-serif;
+    color: #ddd;
+  }
+
+  /* Área del grafo */
+  #cy {
+    width: 78vw;
+    height: 100vh;
+    border-right: 2px solid #222;
+    background: #111;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    width: 22vw;
+    padding: 20px;
+    overflow-y: auto;
+    background: #161616;
+    box-shadow: -4px 0 8px rgba(0,0,0,0.4);
+  }
+
+  h2 {
+    margin-bottom: 5px;
+    color: #fff;
+  }
+  h3 {
+    margin-top: 20px;
+    color: #9cf;
+  }
+
+  select, button {
+    padding: 10px;
+    margin: 6px 0 12px 0;
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  select {
+    background: #222;
+    color: #ddd;
+  }
+
+  button {
+    background: #3a7;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    background: #2b6;
+    transform: scale(1.02);
+  }
+
+  #info {
+    background: #1e1e1e;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+  }
+
+  #conclusionBox {
+    margin-top: 15px;
+    padding: 14px;
+    background: #1d1d1d;
+    border-radius: 6px;
+    border: 1px solid #333;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #ccc;
+  }
+
+</style>
+</head>
+<body>
+
+<div id="cy"></div>
+
+<div id="sidebar">
+  <h2>Información del nodo</h2>
+  <div id="info">Haz clic en un nodo para ver detalles</div>
+
+  <h3>Parámetros</h3>
+
+  <label>Distrito:</label>
+  <select id="districtSelect">
+    <option value="">Seleccionar distrito</option>
+    <option value="CARABAYLLO">Carabayllo</option>
+    <option value="SANTA_ANITA">Santa Anita</option>
+    <option value="SAN_BORJA">San Borja</option>
+    <option value="VILLA_MARIA_DEL_TRIUNFO">Villa María del Triunfo</option>
+    <option value="SAN_JUAN_DE_LURIGANCHO">San Juan de Lurigancho</option>
+    <option value="JESUS_MARIA">Jesús María</option>
+    <option value="SAN_MARTIN_DE_PORRES">San Martín de Porres</option>
+  </select>
+
+  <label>Contaminante:</label>
+  <select id="pollutantSelect">
+    <option value="AVG" selected>AVG</option>
+    <option value="PM10">PM10</option>
+    <option value="PM2_5">PM2.5</option>
+    <option value="NO2">NO2</option>
+  </select>
+
+  <label>Modo:</label>
+  <select id="modeSelect">
+    <option value="OMS" selected>OMS</option>
+    <option value="MINAM">MINAM</option>
+  </select>
+
+  <button onclick="loadDistrict()">Cargar grafo</button>
+  <button onclick="resetGraph()">Restablecer</button>
+
+  <h3>Conclusión</h3>
+  <div id="conclusionBox">Cargar un grafo para generar conclusión.</div>
+
+</div>
+
+<script>
+
+let cy;
+let allElements = [];
+let loadedNodes = [];
+
+async function loadDistrict() {
+  const distrito = document.getElementById("districtSelect").value;
+  const pollutant = document.getElementById("pollutantSelect").value;
+  const mode = document.getElementById("modeSelect").value;
+
+  if (!distrito) {
+    alert("Selecciona un distrito.");
+    return;
+  }
+
+  const url = 
+    `http://127.0.0.1:5000/api/global_graph?distrito=${encodeURIComponent(distrito)}&pollutant=${pollutant}&mode=${mode}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  loadedNodes = data.nodes;
+
+  const nodes = data.nodes.map(n => ({
+    data: {
+      id: n.id,
+      label: `${n.distrito} - ${n.fecha}`,
+      distrito: n.distrito,
+      fecha: n.fecha,
+      pm10: n.pm10,
+      pm2_5: n.pm2_5,
+      no2: n.no2,
+      avg: n.avg,
+      color: n.color
+    }
+  }));
+
+  const edges = data.edges.map(e => ({
+    data: {
+      id: `${e.source}_${e.destination}`,
+      source: e.source,
+      target: e.destination
+    }
+  }));
+
+  allElements = [...nodes, ...edges];
+
+  renderGraph(allElements);
+  generateConclusion();
+}
+
+function renderGraph(elements) {
+  cy = cytoscape({
+    container: document.getElementById("cy"),
+    elements: elements,
+
+    style: [
+      {
+        selector: "node",
+        style: {
+          "background-color": "data(color)",
+          "label": "data(label)",
+          "font-size": 6,
+          "color": "#fff"
+        }
+      },
+      {
+        selector: "edge",
+        style: {
+          "width": 0.7,
+          "line-color": "#777",
+          "opacity": 0.25
+        }
+      }
+    ],
+
+    layout: {
+      name: "concentric",
+      concentric: () => 1,
+      levelWidth: () => 1,
+      minNodeSpacing: 8
+    },
+
+    wheelSensitivity: 0.2
+  });
+
+  cy.on("tap", "node", evt => {
+    const d = evt.target.data();
+    document.getElementById("info").innerHTML = `
+      <b>ID:</b> ${d.id}<br>
+      <b>Distrito:</b> ${d.distrito}<br>
+      <b>Fecha:</b> ${d.fecha}<br>
+      <b>PM10:</b> ${d.pm10}<br>
+      <b>PM2.5:</b> ${d.pm2_5}<br>
+      <b>NO2:</b> ${d.no2}<br>
+      <b>AVG:</b> ${d.avg}<br>
+    `;
+  });
+}
+
+function resetGraph() {
+  if (allElements.length > 0) renderGraph(allElements);
+}
+
+function generateConclusion() {
+  if (loadedNodes.length === 0) {
+    document.getElementById("conclusionBox").innerHTML =
+      "Cargar un distrito para generar conclusión.";
+    return;
+  }
+
+  const pollutant = document.getElementById("pollutantSelect").value.toLowerCase();
+  const distrito = document.getElementById("districtSelect").value.replace(/_/g, " ");
+
+  const values = loadedNodes.map(n => n[pollutant]);
+  const min = Math.min(...values).toFixed(2);
+  const max = Math.max(...values).toFixed(2);
+  const avg = (values.reduce((a,b) => a+b, 0) / values.length).toFixed(2);
+
+  let criticalLimit = 0;
+  if (pollutant === "pm2_5") criticalLimit = 55;
+  if (pollutant === "pm10") criticalLimit = 125;
+  if (pollutant === "no2") criticalLimit = 100;
+  if (pollutant === "avg") criticalLimit = 93;
+
+  const criticalDays = values.filter(v => v > criticalLimit).length;
+  const criticalPct = ((criticalDays / values.length) * 100).toFixed(1);
+
+  document.getElementById("conclusionBox").innerHTML = `
+    <b>Distrito:</b> ${distrito}<br><br>
+    Entre 2015 y 2024, los niveles de <b>${pollutant.toUpperCase()}</b> presentan:<br>
+    • Mínimo: <b>${min}</b><br>
+    • Máximo: <b>${max}</b><br>
+    • Promedio general: <b>${avg}</b><br><br>
+
+    El <b>${criticalPct}%</b> de los días supera el umbral crítico según OMS.<br><br>
+
+    El comportamiento general muestra variaciones moderadas y algunos picos
+    donde los valores se incrementan notablemente. No se observa un incremento
+    sostenido a largo plazo, sino episodios puntuales de alta contaminación.
+  `;
+}
+
+</script>
+
+</body>
+</html>
