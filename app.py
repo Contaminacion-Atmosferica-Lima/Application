@@ -243,28 +243,6 @@ def propagation():
         "order": [node for node, d in ordered]
     })
 
-
-# @swag_from("docs/global_graph.yml")
-# @app.route('/api/global_graph')
-# def get_global_graph():
-#     df = get_df()
-#     threshold = float(request.args.get('th', 10))
-
-#     G = build_global_graph(df, distance_threshold=threshold)
-
-#     graph_json = {
-#         'total_nodes': len(G.nodes()),
-#         'total_edges': len(G.edges()),
-#         'nodes': [{'id': n, **G.nodes[n]} for n in G.nodes()],
-#         'edges': [
-#             {'source': u, 'destination': v, 'distance': d['weight']}
-#             for u, v, d in G.edges(data=True)
-#         ]
-#     }
-
-#     return jsonify(graph_json)
-
-
 @swag_from("docs/global_graph.yml")
 @app.route('/api/global_graph')
 def api_global_graph():
@@ -275,17 +253,14 @@ def api_global_graph():
     mode = request.args.get("mode", "OMS").upper()
     threshold = float(request.args.get("th", 10))
 
-    # Filtrar distrito si se envía
     if distrito:
         df = df[df["distrito"].str.upper() == distrito.upper()]
 
-    # Construir grafo
     G = build_global_graph(df, distance_threshold=threshold)
 
     nodes_json = []
     for node_id, data in G.nodes(data=True):
 
-        # obtener valor del contaminante elegido
         if pollutant == "PM10":
             value = data["pm10"]
         elif pollutant in ["PM2_5", "PM2.5"]:
@@ -295,7 +270,6 @@ def api_global_graph():
         else:
             value = data["avg"]
 
-        # clasificar color en backend
         color = classify_pollution(value, pollutant, mode)
 
         nodes_json.append({
