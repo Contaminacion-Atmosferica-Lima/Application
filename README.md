@@ -11,6 +11,7 @@ También implementa algoritmos enseñados en el curso de Complejidad Algorítmic
 - **BFS**
 - **Union-Find (UFDS)**
 - **MST**
+- **Dijkstra**
 - **Graph Builder**
 
 ---
