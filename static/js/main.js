@@ -6,6 +6,53 @@ let propagationLayer;
 let nodeMarkers = {};  
 let lastGraphData = null; 
 
+const POLLUTANT_THRESHOLDS = {
+  PM2_5: {
+    label: "PM\u2082.\u2085",
+    unit: "µg/m³",
+    rows: [
+      { level: "Buena",              oms: "0–15",   minam: "0–25",   colorClass: "green",  colorLabel: "Verde" },
+      { level: "Moderada",           oms: "15–35",  minam: "25–50",  colorClass: "yellow", colorLabel: "Amarillo" },
+      { level: "Dañina (sensible)",  oms: "35–55",  minam: "50–75",  colorClass: "orange", colorLabel: "Naranja" },
+      { level: "Dañina (general)",   oms: "55–150", minam: "75–125", colorClass: "red",    colorLabel: "Rojo" },
+      { level: "Peligrosa",          oms: ">150",   minam: ">125",   colorClass: "purple", colorLabel: "Morado" }
+    ]
+  },
+  PM10: {
+    label: "PM\u2081\u2080",
+    unit: "µg/m³",
+    rows: [
+      { level: "Buena",              oms: "0–45",   minam: "0–50",   colorClass: "green",  colorLabel: "Verde" },
+      { level: "Moderada",           oms: "45–75",  minam: "50–100", colorClass: "yellow", colorLabel: "Amarillo" },
+      { level: "Dañina (sensible)",  oms: "75–125", minam: "100–150",colorClass: "orange", colorLabel: "Naranja" },
+      { level: "Dañina (general)",   oms: "125–250",minam: "150–300",colorClass: "red",    colorLabel: "Rojo" },
+      { level: "Peligrosa",          oms: ">250",   minam: ">300",   colorClass: "purple", colorLabel: "Morado" }
+    ]
+  },
+  NO2: {
+    label: "NO\u2082",
+    unit: "µg/m³",
+    rows: [
+      { level: "Buena",              oms: "0–25",   minam: "0–100",  colorClass: "green",  colorLabel: "Verde" },
+      { level: "Moderada",           oms: "25–50",  minam: "100–200",colorClass: "yellow", colorLabel: "Amarillo" },
+      { level: "Dañina (sensible)",  oms: "50–100", minam: "200–300",colorClass: "orange", colorLabel: "Naranja" },
+      { level: "Dañina (general)",   oms: "100–200",minam: "300–500",colorClass: "red",    colorLabel: "Rojo" },
+      { level: "Peligrosa",          oms: ">200",   minam: ">500",   colorClass: "purple", colorLabel: "Morado" }
+    ]
+  },
+  AVG: {
+    label: "Promedio (AVG)",
+    unit: "µg/m³ (promedio de PM\u2082.\u2085, PM\u2081\u2080 y NO\u2082)",
+    rows: [
+      { level: "Buena",              oms: "0–28",   minam: "0–60",   colorClass: "green",  colorLabel: "Verde" },
+      { level: "Moderada",           oms: "28–53",  minam: "60–115", colorClass: "yellow", colorLabel: "Amarillo" },
+      { level: "Dañina (sensible)",  oms: "53–93",  minam: "115–175",colorClass: "orange", colorLabel: "Naranja" },
+      { level: "Dañina (general)",   oms: "93–200", minam: "175–300",colorClass: "red",    colorLabel: "Rojo" },
+      { level: "Peligrosa",          oms: ">200",   minam: ">300",   colorClass: "purple", colorLabel: "Morado" }
+    ]
+  }
+};
+
 let currentGraphRequestId = 0;
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
@@ -63,6 +110,27 @@ function initUI() {
   const btnPropagation = document.getElementById("btn-propagation");
   if (btnPropagation) {
     btnPropagation.addEventListener("click", handlePropagation);
+  }
+
+  const pollutantSelect = document.getElementById("pollutant-select");
+  if (pollutantSelect) {
+    pollutantSelect.addEventListener("change", () => {
+      showThresholdsFromUI();
+    });
+  }
+
+  const modeRadios = document.querySelectorAll("input[name='mode']");
+  modeRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      showThresholdsFromUI();
+
+    });
+  });
+
+  const dateInput = document.getElementById("date-input");
+  if (dateInput && dateInput.showPicker) {
+    dateInput.addEventListener("click", () => dateInput.showPicker());
+    dateInput.addEventListener("focus", () => dateInput.showPicker());
   }
 }
 
@@ -163,12 +231,14 @@ function renderGraph(data) {
       <div class="small">
         <strong>${node.distrito}</strong><br/>
         Fecha: ${node.fecha}<br/>
-        PM2.5: ${node.pm2_5} µg/m³<br/>
-        PM10: ${node.pm10} µg/m³<br/>
-        NO₂: ${node.no2} µg/m³<br/>
+        PM2.5: ${node.pm2_5} <br/>
+        PM10: ${node.pm10} <br/>
+        NO₂: ${node.no2} <br/>
+        AVG: ${node.avg} <br/>
         Color: <span style="color:${color}; font-weight:bold;">${node.color}</span>
       </div>
     `;
+
 
     marker.bindPopup(popupHtml);
     marker.addTo(graphLayer);
@@ -258,11 +328,83 @@ function updateGraphSummary(data) {
   if (edgesSpan) edgesSpan.textContent = data.edges?.length ?? "–";
 }
 
+
+function showPollutantThresholds(pollutantKey) {
+  const info = POLLUTANT_THRESHOLDS[pollutantKey];
+  if (!info) return;
+
+  const mode =
+    document.querySelector("input[name='mode']:checked")?.value || "OMS";
+  const isOms = mode === "OMS";
+  const rangoColTitle = isOms ? "Rango OMS" : "Rango MINAM";
+
+  const title = `Umbrales de ${info.label} (${mode})`;
+
+  let rowsHtml = "";
+  info.rows.forEach((row) => {
+    const rango = isOms ? row.oms : row.minam;
+    rowsHtml += `
+      <tr>
+        <td>${row.level}</td>
+        <td>${rango}</td>
+        <td>
+          <span class="legend legend-${row.colorClass} me-1"></span>
+          ${row.colorLabel}
+        </td>
+      </tr>
+    `;
+  });
+
+  const tableHtml = `
+    <p class="mb-2 small">
+      Clasificación de niveles para <strong>${info.label}</strong> (${info.unit}).<br>
+      Modo de umbrales actual: <strong>${mode}</strong>.
+    </p>
+    <table class="table table-sm table-dark table-borderless mb-0 align-middle">
+      <thead class="small">
+        <tr>
+          <th>Nivel</th>
+          <th>${rangoColTitle}</th>
+          <th>Color</th>
+        </tr>
+      </thead>
+      <tbody class="small">
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
+
+  setAlgoSummary(title, tableHtml);
+}
+
+
+function showThresholdsFromUI() {
+  const pollutant = document.getElementById("pollutant-select")?.value;
+  if (!pollutant) return;
+  showPollutantThresholds(pollutant);
+}
+
 function setAlgoSummary(mainText, extraHtml) {
   const main = document.getElementById("algo-summary-main");
   const extra = document.getElementById("algo-extra-info");
   if (main) main.textContent = mainText || "";
   if (extra) extra.innerHTML = extraHtml || "";
+}
+
+function syncGraphSummaryFromUI() {
+  const pollutantSelect = document.getElementById("pollutant-select");
+  const modeRadio = document.querySelector("input[name='mode']:checked");
+
+  const pollutantSpan = document.getElementById("info-pollutant");
+  const modeSpan = document.getElementById("info-mode");
+
+  if (!pollutantSelect || !modeRadio || !pollutantSpan || !modeSpan) return;
+
+  const label = pollutantSelect.options[pollutantSelect.selectedIndex].textContent.trim();
+  const modeLabel = modeRadio.value || "–";
+
+  pollutantSpan.textContent = label || "–";
+  modeSpan.textContent = modeLabel;
 }
 
 function showError(msg) {
@@ -313,7 +455,7 @@ async function handleBfsIslands() {
     const bfsBadge = document.getElementById("bfs-count-badge");
     if (bfsBadge) bfsBadge.textContent = islands.length;
 
-    const highlightColors = ["#00ffff", "#ff00ff", "#00ff7f", "#ffaf00", "#ffffff"];
+    const highlightColors = ["#ffffff", "#00e5ff", "#ff00ff", "#00ff7f", "#ffea00"];
 
     islands.forEach((island, idx) => {
       const highlightColor =
@@ -325,13 +467,16 @@ async function handleBfsIslands() {
         const latlng = baseMarker.getLatLng();
 
         L.circleMarker(latlng, {
-          radius: 11,
-          color: highlightColor,
-          weight: 2,
-          fillOpacity: 0
+          radius: 13,              
+          color: "#000000",       
+          weight: 3,
+          fillColor: highlightColor,
+          fillOpacity: 0.45,       
+          opacity: 1
         }).addTo(islandsLayer);
       });
     });
+
 
     const extraHtml = `
       <p class="mb-1">
@@ -428,17 +573,32 @@ async function handleMst() {
     const mstBadge = document.getElementById("mst-count-badge");
     if (mstBadge) mstBadge.textContent = data.mst_edge_count ?? edges.length;
 
+    if (graphLayer && nodeMarkers) {
+      graphLayer.clearLayers(); 
+      Object.values(nodeMarkers).forEach((marker) => {
+        marker.addTo(graphLayer);
+      });
+    }
+
     edges.forEach((edge) => {
       const srcMarker = nodeMarkers[edge.source];
       const dstMarker = nodeMarkers[edge.destination];
       if (!srcMarker || !dstMarker) return;
 
       const latlngs = [srcMarker.getLatLng(), dstMarker.getLatLng()];
-      L.polyline(latlngs, {
+      const poly = L.polyline(latlngs, {
         color: "#00ff7f",
         weight: 3,
         opacity: 0.9
       }).addTo(mstLayer);
+
+      if (edge.distance !== undefined) {
+        poly.bindTooltip(`Distancia: ${edge.distance} km`, {
+          sticky: true,
+          direction: "center",
+          className: "mst-tooltip"
+        });
+      }
     });
 
     const extraHtml = `
@@ -450,7 +610,7 @@ async function handleMst() {
         <strong>Peso total:</strong> ${data.total_weight} km · Umbral base: ${data.threshold} km.
       </p>
       <p class="mb-0 small text-secondary">
-        Las aristas del MST se muestran en verde brillante sobre el grafo.
+        Las aristas del MST se muestran en verde brillante y muestran la distancia al pasar el cursor.
       </p>
     `;
     setAlgoSummary("Árbol de expansión mínima (Kruskal)", extraHtml);
@@ -469,11 +629,16 @@ async function handlePropagation() {
   propagationLayer.clearLayers();
 
   const date = document.getElementById("date-input").value || lastGraphData.date;
-  const originInput = document.getElementById("origin-input");
-  const origin = originInput ? originInput.value.trim() : "";
+
+  const originSelect = document.getElementById("origin-select");
+  const origin = originSelect && originSelect.value
+    ? originSelect.value.trim()
+    : "";
+
+  console.log("Origen seleccionado:", origin);
 
   if (!origin) {
-    showError("Ingresa un distrito de origen para la propagación.");
+    showError("Selecciona un distrito de origen para la propagación.");
     return;
   }
 
@@ -526,9 +691,10 @@ async function handlePropagation() {
   }
 }
 
+
 function animatePropagation(order) {
   propagationLayer.clearLayers();
-  const delayPerNode = 700; 
+  const delayPerNode = 700; // ms
 
   order.forEach((nodeId, index) => {
     setTimeout(() => {
@@ -537,11 +703,11 @@ function animatePropagation(order) {
       const latlng = marker.getLatLng();
 
       const circle = L.circle(latlng, {
-        radius: 500, 
-        color: "#00ffff",
-        weight: 2,
-        fillColor: "#00ffff",
-        fillOpacity: 0.15
+        radius: 800,          // más grande para que se note
+        color: "#ffffff",     // borde blanco bien visible
+        weight: 3,            // línea más gruesa
+        fillColor: "#00b0ff", // azul intenso
+        fillOpacity: 0.4      // más opaco para que destaque
       }).addTo(propagationLayer);
 
       setTimeout(() => {
@@ -550,6 +716,7 @@ function animatePropagation(order) {
     }, index * delayPerNode);
   });
 }
+
 
 function formatNodeId(nodeId) {
   if (!nodeId || typeof nodeId !== "string") return nodeId;

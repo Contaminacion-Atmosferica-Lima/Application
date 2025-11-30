@@ -15,7 +15,7 @@ body {
 #map,
 .map-container {
   width: 100%;
-  height: 70vh;
+  height: 60vh;
   background: #020308;
 }
 
@@ -90,4 +90,79 @@ body {
   font-size: 0.7rem;
   padding: 2px 6px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-panel {
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.sidebar-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-panel::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 4px;
+}
+
+.sidebar-panel::-webkit-scrollbar-track {
+  background: #151515;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-panel {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+  cursor: pointer;
+
+  width: 18px;
+  height: 18px;
+
+  margin-right: 0.1rem;        
+  transform: translateY(-1px);  
+}
+
+input[type="date"].form-control {
+  color: #f5f5f5;
+  background-color: #111;
+  border-color: #444;
+  padding-right: 0.7rem;  
+}
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #111;
+  color: #f5f5f5;
+  border-color: #444;
+
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%23ffffff' d='M4 6l4 4 4-4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;  
+  background-size: 14px 14px;        
+  padding-right: 2.6rem;          
+}
+
+
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.15rem rgba(13,110,253,.25);
+}
+
+.mst-tooltip {
+  background: #111;
+  color: #00ff7f;
+  border-radius: 6px;
+  padding: 4px 8px;
+  border: 1px solid #00ff7f;
+  font-size: 11px;
 }

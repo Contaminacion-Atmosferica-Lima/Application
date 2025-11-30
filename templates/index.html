@@ -4,11 +4,11 @@
 {% block content %}
 <div class="row g-3">
   <div class="col-12 col-lg-4">
-    <section class="panel shadow-sm rounded-4 p-3 h-100">
+    <section class="panel sidebar-panel shadow-sm rounded-4 p-3">
       <h2 class="h5 mb-2">Mapa de contaminación del aire</h2>
       <p class="small text-secondary mb-3">
         Visualiza la red de distritos de Lima como un grafo construido a partir de datos
-        de calidad del aire (PM2.5, PM10 y NO₂). Los colores provienen de los umbrales
+        de calidad del aire, PM2.5, PM10 y NO₂. Los colores provienen de los umbrales
         definidos por la <strong>OMS</strong> o el <strong>MINAM</strong>, según el modo seleccionado.
       </p>
 
@@ -21,9 +21,7 @@
             name="date"
             class="form-control form-control-sm bg-dark text-light border-secondary"
           />
-          <div class="form-text text-secondary small">
-            Si se deja vacío, se usa la última fecha disponible del dataset.
-          </div>
+          
         </div>
 
         <div class="mb-3">
@@ -33,14 +31,12 @@
             name="pollutant"
             class="form-select form-select-sm bg-dark text-light border-secondary"
           >
+            <option value="AVG">AVG</option>
             <option value="PM2_5" selected>PM2.5</option>
             <option value="PM10">PM10</option>
             <option value="NO2">NO₂</option>
           </select>
         </div>
-
-
-
 
         <div class="mb-3">
           <label class="form-label">Modo de umbrales</label>
@@ -89,8 +85,7 @@
       <section>
         <h3 class="h6">Algoritmos sobre el grafo</h3>
         <p class="small text-secondary mb-2">
-          Todos los algoritmos se ejecutan sobre el grafo del día seleccionado
-          (usando la distancia y contaminante configurados arriba).
+          Todos los algoritmos se ejecutan sobre el grafo del día seleccionado, usando la distancia y contaminante configurados arriba.
         </p>
 
         <div class="algorithm-block mb-2">
@@ -127,11 +122,7 @@
             <span class="small fw-semibold">Comunidades por color (UFDS)</span>
             <span class="badge bg-secondary" id="ufds-count-badge">–</span>
           </div>
-          <button
-            class="btn btn-outline-light btn-sm w-100 mt-1"
-            id="btn-ufds"
-            type="button"
-          >
+          <button class="btn btn-outline-light btn-sm w-100 mt-1" id="btn-ufds" type="button">
             Detectar comunidades (UFDS)
           </button>
         </div>
@@ -141,11 +132,7 @@
             <span class="small fw-semibold">Árbol de expansión mínima (MST)</span>
             <span class="badge bg-secondary" id="mst-count-badge">–</span>
           </div>
-          <button
-            class="btn btn-outline-success btn-sm w-100 mt-1"
-            id="btn-mst"
-            type="button"
-          >
+          <button class="btn btn-outline-success btn-sm w-100 mt-1" id="btn-mst" type="button">
             Calcular MST (Kruskal)
           </button>
         </div>
@@ -154,21 +141,20 @@
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="small fw-semibold">Propagación desde origen (Dijkstra)</span>
           </div>
-          <label for="origin-input" class="form-label small mb-1">Distrito origen</label>
-          <input
-            type="text"
-            id="origin-input"
-            class="form-control form-control-sm bg-dark text-light border-secondary"
-            placeholder="Ej: San Borja"
-          />
-          <div class="form-text text-secondary small">
-            Debe existir en el grafo del día seleccionado (se convierte a SAN_BORJA_FECHA).
-          </div>
-          <button
-            class="btn btn-outline-info btn-sm w-100 mt-2"
-            id="btn-propagation"
-            type="button"
-          >
+
+          <label for="origin-select" class="form-label small mb-1">Distrito origen</label>
+          <select id="origin-select" class="form-select form-select-sm bg-dark text-light border-secondary">
+            <option value="">Selecciona un distrito</option>
+            <option value="San Borja">San Borja</option>
+            <option value="Santa Anita">Santa Anita</option>
+            <option value="Carabayllo">Carabayllo</option>
+            <option value="Jesus Maria">Jesus Maria</option>
+            <option value="San Martin de Porres">San Martin de Porres</option>
+            <option value="San Juan de Lurigancho">San Juan de Lurigancho</option>
+            <option value="Villa Maria del Triunfo">Villa Maria del Triunfo</option>
+          </select>
+
+          <button class="btn btn-outline-info btn-sm w-100 mt-2" id="btn-propagation" type="button">
             Simular propagación
           </button>
         </div>
