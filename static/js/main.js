@@ -9,7 +9,7 @@ let lastGraphData = null;
 const POLLUTANT_THRESHOLDS = {
   PM2_5: {
     label: "PM\u2082.\u2085",
-    unit: "µg/m³",
+    unit: "",
     rows: [
       { level: "Buena",              oms: "0–15",   minam: "0–25",   colorClass: "green",  colorLabel: "Verde" },
       { level: "Moderada",           oms: "15–35",  minam: "25–50",  colorClass: "yellow", colorLabel: "Amarillo" },
@@ -20,7 +20,7 @@ const POLLUTANT_THRESHOLDS = {
   },
   PM10: {
     label: "PM\u2081\u2080",
-    unit: "µg/m³",
+    unit: "",
     rows: [
       { level: "Buena",              oms: "0–45",   minam: "0–50",   colorClass: "green",  colorLabel: "Verde" },
       { level: "Moderada",           oms: "45–75",  minam: "50–100", colorClass: "yellow", colorLabel: "Amarillo" },
@@ -31,7 +31,7 @@ const POLLUTANT_THRESHOLDS = {
   },
   NO2: {
     label: "NO\u2082",
-    unit: "µg/m³",
+    unit: "",
     rows: [
       { level: "Buena",              oms: "0–25",   minam: "0–100",  colorClass: "green",  colorLabel: "Verde" },
       { level: "Moderada",           oms: "25–50",  minam: "100–200",colorClass: "yellow", colorLabel: "Amarillo" },
@@ -42,7 +42,7 @@ const POLLUTANT_THRESHOLDS = {
   },
   AVG: {
     label: "Promedio (AVG)",
-    unit: "µg/m³ (promedio de PM\u2082.\u2085, PM\u2081\u2080 y NO\u2082)",
+    unit: "promedio de PM\u2082.\u2085, PM\u2081\u2080 y NO\u2082",
     rows: [
       { level: "Buena",              oms: "0–28",   minam: "0–60",   colorClass: "green",  colorLabel: "Verde" },
       { level: "Moderada",           oms: "28–53",  minam: "60–115", colorClass: "yellow", colorLabel: "Amarillo" },
@@ -357,7 +357,7 @@ function showPollutantThresholds(pollutantKey) {
 
   const tableHtml = `
     <p class="mb-2 small">
-      Clasificación de niveles para <strong>${info.label}</strong> (${info.unit}).<br>
+      Clasificación de niveles para <strong>${info.label}</strong> ${info.unit}.<br>
       Modo de umbrales actual: <strong>${mode}</strong>.
     </p>
     <table class="table table-sm table-dark table-borderless mb-0 align-middle">
