@@ -62,6 +62,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initMap() {
   map = L.map("map").setView([-12.05, -77.04], 11);
+
+map.createPane("bfsPane");
+map.getPane("bfsPane").style.zIndex = 300; 
+map.getPane("bfsPane").style.pointerEvents = "none";
+
+
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: '© OpenStreetMap'
@@ -467,11 +473,12 @@ async function handleBfsIslands() {
         const latlng = baseMarker.getLatLng();
 
         L.circleMarker(latlng, {
-          radius: 13,              
-          color: "#000000",       
+          pane: "bfsPane",
+          radius: 13,
+          color: "#000000",
           weight: 3,
           fillColor: highlightColor,
-          fillOpacity: 0.45,       
+          fillOpacity: 0.45,
           opacity: 1
         }).addTo(islandsLayer);
       });
